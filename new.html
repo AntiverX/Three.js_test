@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>three.js webgl - skinning and morphing</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+        body {
+            margin: 0;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%
+        }
+
+    </style>
+</head>
+
+<body>
+<div id="coffee"></div>
+</body>
+<script src="js/three.js"></script>
+<script src="js/libs/inflate.min.js"></script>
+<script src="js/controls/MapControls.js"></script>
+<script src="js/loaders/FBXLoader.js"></script>
+<script src="js/loaders/GLTFLoader.js"></script>
+<script src="js/libs/stats.min.js"></script>
+<script src="js/libs/dat.gui.min.js"></script>
+<script>
+    class Coffee {
+        constructor() {
+            this.container = document.getElementById('coffee');
+            this.mouse = new THREE.Vector2();
+            this.raycaster = new THREE.Raycaster();
+            //scene
+            this.scene = new THREE.Scene();
+            this.scene.background = new THREE.Color(0xe0e0e0);
+            this.scene.fog = new THREE.Fog(0xe0e0e0, 20, 100);
+            this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+            // lights
+
+            var light = new THREE.HemisphereLight(0xffffff, 0x444444);
+            light.position.set(0, 20, 0);
+            this.scene.add(light);
+
+            light = new THREE.DirectionalLight(0xffffff);
+            light.position.set(0, 20, 10);
+            this.scene.add(light);
+            this.clock = new THREE.Clock();
+
+            this.renderer = new THREE.WebGLRenderer();
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+            this.container.appendChild(this.renderer.domElement);
+            // this.geometry = new THREE.BoxGeometry(1, 1, 1);
+            // this.material = new THREE.MeshBasicMaterial({color: 0x00ff00});
+            // this.cube = new THREE.Mesh(this.geometry, this.material);
+            // this.scene.add(this.cube);
+
+            this.loader = new THREE.GLTFLoader();
+            this.mixer = []
+            this.stats = new Stats();
+            this.container.appendChild(this.stats.dom);
+            this.load_gltf('RobotExpressive.glb', -4, 0, -3);
+            this.load_gltf('RobotExpressive.glb', -4, 0, 4);
+            this.load_gltf('RobotExpressive.glb', -4, 0, 11.5);
+            this.load_gltf('RobotExpressive.glb', 6.5, 0, -3);
+            this.load_gltf('RobotExpressive.glb', 6.5, 0, 4);
+            this.load_gltf('RobotExpressive.glb', 6.5, 0, 11.5);
+            // this.load_fbx('coffee.FBX');
+            this.camera.position.z = 5;
+
+            this.renderer.domElement.addEventListener("click", this.click, true);
+        }
+
+        click = (event) => {
+            this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            this.raycaster.setFromCamera(this.mouse, this.camera);
+            let intersects = this.raycaster.intersectObjects(this.scene.children);
+            if (intersects.length > 0) {
+                console.log(intersects);
+            }
+        }
+
+        load_gltf = (model, x, y, z) => {
+            this.loader.load(model, (gltf) => {
+                gltf.scene.children[0].scale.set(0.5, 0.5, 0.5);
+                gltf.scene.children[0].position.set(x, y, z);
+                let model = gltf.scene.children[0];
+                this.scene.add(model);
+                let mix = new THREE.AnimationMixer(model);
+                let action = mix.clipAction(gltf.animations[2]);
+                action.play();
+            }, undefined, function (e) {
+                console.error(e);
+            });
+        }
+
+        animate = () => {
+            requestAnimationFrame(this.animate);
+            this.renderer.render(this.scene, this.camera);
+        };
+    }
+
+    var coffee = new Coffee();
+    coffee.animate();
+</script>
+</html>

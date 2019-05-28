@@ -32,10 +32,12 @@
         constructor() {
             this.container = document.getElementById('coffee');
 
+            //camera
             this.camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 1, 1000);
             this.camera.position.set(1.9879850940462231, 2.038905240209378, 1.8316491035985485);
             // this.camera.lookAt(new THREE.Vector3(0, 2, 0));
 
+            //scene
             this.scene = new THREE.Scene();
             this.scene.background = new THREE.Color(0xe0e0e0);
             this.scene.fog = new THREE.Fog(0xe0e0e0, 20, 100);
@@ -69,14 +71,14 @@
 
             // ground
 
-            var mesh = new THREE.Mesh(new THREE.PlaneBufferGeometry(2000, 2000), new THREE.MeshPhongMaterial({color: 0x999999, depthWrite: false}));
-            mesh.rotation.x = -Math.PI / 2;
-            this.scene.add(mesh);
-
-            var grid = new THREE.GridHelper(200, 40, 0x000000, 0x000000);
-            grid.material.opacity = 0.2;
-            grid.material.transparent = true;
-            this.scene.add(grid);
+            // var mesh = new THREE.Mesh(new THREE.PlaneBufferGeometry(2000, 2000), new THREE.MeshPhongMaterial({color: 0x999999, depthWrite: false}));
+            // mesh.rotation.x = -Math.PI / 2;
+            // this.scene.add(mesh);
+            //
+            // var grid = new THREE.GridHelper(200, 40, 0x000000, 0x000000);
+            // grid.material.opacity = 0.2;
+            // grid.material.transparent = true;
+            // this.scene.add(grid);
 
             // model
 
@@ -103,6 +105,11 @@
             document.addEventListener("keydown", this.keypress, true);
             document.addEventListener("keyup", this.keyup, true);
             this.keymap = new Array();
+            //鼠标选择器
+            this.mouse = new THREE.Vector2();
+            this.raycaster = new THREE.Raycaster();
+            this.renderer.domElement.addEventListener("click", this.click, true);
+            this.all_object = [];
 
         }
 
@@ -124,12 +131,24 @@
 
         }
 
+        //点击事件
+        click = (event) => {
+            this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            this.raycaster.setFromCamera(this.mouse, this.camera);
+            let intersects = this.raycaster.intersectObjects(this.scene.children,true);
+            if (intersects.length > 0) {
+                console.log(intersects);
+            }
+        }
+
         load_gltf = (model, x, y, z) => {
             this.loader.load(model, (gltf) => {
                 gltf.scene.children[0].scale.set(0.5, 0.5, 0.5);
                 gltf.scene.children[0].position.set(x, y, z);
                 let model = gltf.scene.children[0];
                 this.scene.add(model);
+                this.all_object.push(model);
                 let mix = new THREE.AnimationMixer(model);
                 this.mixer.push(mix);
                 let action = mix.clipAction(gltf.animations[2]);
